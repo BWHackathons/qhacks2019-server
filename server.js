@@ -6,9 +6,13 @@ var fs = require('fs');
 var path_module = require('path');
 var _ = require("lodash");
 var sqlite = require("sqlite3");
+var cookieParser = require("cookie-parser");
 
 var helpers = require("./modules/helpers");
-var sapi = require("./modules/sapi")
+var sapi = require("./modules/sapi");
+var sauth = require("./modules/spotifyAuth");
+
+var appkeys = require("./private/keys");
 
 const PORT = 80; //443 for HTTPS
 
@@ -31,10 +35,13 @@ httpApp.set('port', process.env.PORT || PORT);
 httpApp.use(morgan("dev"));
 httpApp.use(bodyParser.json());
 httpApp.use(bodyParser.urlencoded({extended:true}));
+httpApp.use(cookieParser())
 
 var httpServer = httpApp.listen(httpApp.get('port'), () =>
 {
 	console.log("Express HTTP server listening on port " + httpApp.get('port'));
+
+	sauth.init(httpApp, appkeys);
 
 	httpApp.all("/groups/create", (req, res) => {
 		let code = helpers.generateCode();

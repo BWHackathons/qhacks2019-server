@@ -3,12 +3,11 @@
 /* Modules */
 var querystring = require('querystring');
 var request = require('request');
-var log = require("./log");
 
 /* Constants */
 const SCOPE = "user-read-private user-read-email user-read-playback-state user-modify-playback-state playlist-modify-private";
 const STATEKEY = "konvoi_auth_state";
-const CALLBACK_PATH = "/callback";
+const CALLBACK_PATH = "/users/spotify/callback";
 
 /* Module Globals */
 var access_tokens = {};
@@ -16,14 +15,14 @@ var refresh_tokens = {};
 var fullUserData = {};
 /* Core Functions */
 
-function init(app, config, appkeys)
+function init(app, appkeys)
 {
 		var REDIRECT_URI = "http://localhost" + CALLBACK_PATH;
 		app.get('/users/spotify/login', function(req, res) {
 				var state = generateRandomString(16);
 				res.cookie(STATEKEY, state);
 
-				log.debug("Starting Spotify Auth for " + state);
+				console.log("Starting Spotify Auth for " + state);
 
 				// your application requests authorization
 				res.redirect('https://accounts.spotify.com/authorize?' +
@@ -44,12 +43,13 @@ function init(app, config, appkeys)
 			var code = req.query.code || null;
 			var state = req.query.state || null;
 			var storedState = req.cookies ? req.cookies[STATEKEY] : null;
+			console.log(req.cookies);
 
-			log.debug("Received callback for " + state);
-			log.debug("Saved state is " + storedState);
+			console.log("Received callback for " + state);
+			console.log("Saved state is " + storedState);
 
 			if (state === null || state !== storedState) {
-				log.warn("State Mismatch!");
+				console.log("State Mismatch!");
 				res.redirect('/#' +
 					querystring.stringify({
 						error: 'state_mismatch'
