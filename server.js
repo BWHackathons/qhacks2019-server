@@ -91,6 +91,19 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 		});
 	});
 
+	httpApp.post("/users/:id/setBitmoji", (req, res) => {
+		db.serialize(() => {
+			db.run("UPDATE users SET `bitmojiUrl` = ? WHERE `userId` = ?", [req.body.bitmojiUrl, req.params.id], (err) => {
+				if(err){
+					console.log(err);
+					res.sendStatus(400);
+				}else{
+					res.sendStatus(200);
+				}
+			});
+		});
+	});
+
 });
 
 
