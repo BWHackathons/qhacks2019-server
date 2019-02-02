@@ -11,6 +11,7 @@ var cookieParser = require("cookie-parser");
 var helpers = require("./modules/helpers");
 var sapi = require("./modules/sapi");
 var sauth = require("./modules/spotifyAuth");
+var shandler = require("./modules/spotifyHandler");
 
 var appkeys = require("./private/keys");
 
@@ -23,8 +24,8 @@ var db = new sqlite.Database("Konvoi.sqlite", (err) => {
 	}
 
 	db.serialize(() => {
-		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, PRIMARY KEY(`groupId`) )");
-		db.run("CREATE TABLE IF NOT EXISTS `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiId` TEXT, FOREIGN KEY (`group`) references groups(`groupId`) )");
+		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, `ownerAccessToken` TEXT, `ownerRefreshToken` TEXT, PRIMARY KEY(`groupId`) )");
+		db.run("CREATE TABLE IF NOT EXISTS `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiId` TEXT, `spotifyAccessToken` TEXT, `spotifyRefreshToken` TEXT, FOREIGN KEY (`group`) references groups(`groupId`) )");
 	});
 
 	console.log("DB Connection Succeeded");
@@ -35,13 +36,14 @@ httpApp.set('port', process.env.PORT || PORT);
 httpApp.use(morgan("dev"));
 httpApp.use(bodyParser.json());
 httpApp.use(bodyParser.urlencoded({extended:true}));
-httpApp.use(cookieParser())
+httpApp.use(cookieParser());
 
 var httpServer = httpApp.listen(httpApp.get('port'), () =>
 {
 	console.log("Express HTTP server listening on port " + httpApp.get('port'));
 
-	sauth.init(httpApp, appkeys);
+	sauth.init(httpApp, appkeys, db);
+	shandler.init(httpApp, db);
 
 	httpApp.all("/groups/create", (req, res) => {
 		let code = helpers.generateCode();
@@ -86,8 +88,6 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 			});
 		});
 	});
-
-	httpApp.all("/user/:userId/")
 
 });
 

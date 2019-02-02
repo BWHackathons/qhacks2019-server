@@ -12,43 +12,55 @@ function getDevices(auth, callback)
 		if (!err && resp.statusCode == 200) {
 			callback(JSON.parse(body).devices);
 		}else{
-			log.error(JSON.stringify(body));
+			console.log(JSON.stringify(body));
 		}
 	});
 }
 
-function setDevice(auth, device)
+function setDevice(auth, device, play=false, callback=undefined)
 {
-	put("https://api.spotify.com/v1/me/player", {device_ids: [device], play: false}, auth, function(err, resp, body){
+	put("https://api.spotify.com/v1/me/player", {device_ids: [device], play: play}, auth, function(err, resp, body){
 			if (!err && resp.statusCode == 204) {
-				log.debug("Device set success");
+				console.log("Device set success");
+				if(callback)
+					callback(true);
 			}else{
-				log.error(resp.statusCode + "/HTTP");
-				log.error(JSON.stringify(body));
+				console.log(resp.statusCode + "/HTTP");
+				console.log(JSON.stringify(body));
+				if(callback)
+					callback(false);
 			}
 		});
 }
 
-function play(auth)
+function play(auth, contextUri=undefined, callback=undefined)
 {
-	put("https://api.spotify.com/v1/me/player/play", {}, auth, function(err, resp, body){
+	put("https://api.spotify.com/v1/me/player/play", {context_uri: contextUri?contextUri:null}, auth, function(err, resp, body){
 		if (!err && resp.statusCode == 204) {
-			log.debug("Play success");
+			console.log("Play success");
+			if(callback)
+				callback(true);
 		}else{
-			log.error(resp.statusCode + "/HTTP");
-			log.error(JSON.stringify(body));
+			console.log(resp.statusCode + "/HTTP");
+			console.log(JSON.stringify(body));
+			if(callback)
+				callback(false);
 		}
 	});
 }
 
-function pause(auth)
+function pause(auth, callback=undefined)
 {
 	put("https://api.spotify.com/v1/me/player/pause", {}, auth, function(err, resp, body){
 		if (!err && resp.statusCode == 204) {
-			log.debug("Pause success");
+			console.log("Pause success");
+			if(callback)
+				callback(true);
 		}else{
-			log.error(resp.statusCode + "/HTTP");
-			log.error(JSON.stringify(body));
+			console.log(resp.statusCode + "/HTTP");
+			console.log(JSON.stringify(body));
+			if(callback)
+				callback(false);
 		}
 	});
 }
@@ -61,13 +73,13 @@ function createPlaylist(auth, userId, code, callback)
 		collaborative: false,
 		description: "Playlist created and used by SpotDJ for room " + code + "."
 	};
-	log.debug("Creating playlist for: " + userId);
+	console.log("Creating playlist for: " + userId);
 	post("https://api.spotify.com/v1/users/" + userId + "/playlists", params, auth, function(err, resp, body){
 		if (!err && (resp.statusCode == 200 || resp.statusCode == 201)) {
 			//callback(JSON.parse(body).id);
 			callback(body.id);
 		}else{
-			log.error(JSON.stringify(body));
+			console.log(JSON.stringify(body));
 		}
 	});
 }
@@ -75,16 +87,16 @@ function createPlaylist(auth, userId, code, callback)
 function addToPlaylist(auth, userId, list, songs, callback)
 {
 	var requrl = "https://api.spotify.com/v1/users/" + userId + "/playlists/" + list + "/tracks";
-	log.debug(requrl);
+	console.log(requrl);
 	var params = {
 		uris: songs
 	};
-	log.debug(JSON.stringify(params));
+	console.log(JSON.stringify(params));
 	post(requrl, params, auth, function(err, resp, body){
 		if (!err && (resp.statusCode == 200 || resp.statusCode == 201)) {
 			callback(true);
 		}else{
-			log.error(JSON.stringify(body));
+			console.log(JSON.stringify(body));
 			callback(false);
 		}
 	});
@@ -106,7 +118,7 @@ function reorderPlaylist(auth, userId, code, oldPos, newPos)
 		if (!err && resp.statusCode == 200) {
 			callback(JSON.parse(body));
 		}else{
-			log.error(JSON.stringify(body));
+			console.log(JSON.stringify(body));
 		}
 	});
 }
@@ -117,7 +129,7 @@ function unfollowPlaylist(auth, userId, code)
 		if (!err && resp.statusCode == 200) {
 			callback(JSON.parse(body));
 		}else{
-			log.error(JSON.stringify(body));
+			console.log(JSON.stringify(body));
 		}
 	});
 }
@@ -133,7 +145,7 @@ function search(auth, query, type, callback)
 		if (!err && resp.statusCode == 200) {
 			callback(JSON.parse(body));
 		}else{
-			log.error(JSON.stringify(body));
+			console.log(JSON.stringify(body));
 		}
 	});
 }
@@ -144,7 +156,7 @@ function getTrackInfo(auth, id, callback)
 		if (!err && resp.statusCode == 200) {
 			callback(JSON.parse(body));
 		}else{
-			log.error(JSON.stringify(body));
+			console.log(JSON.stringify(body));
 		}
 	});
 }

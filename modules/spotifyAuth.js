@@ -13,13 +13,17 @@ const CALLBACK_PATH = "/users/spotify/callback";
 var access_tokens = {};
 var refresh_tokens = {};
 var fullUserData = {};
+
+var stateMap = {};
+
 /* Core Functions */
 
-function init(app, appkeys)
+function init(app, appkeys, db)
 {
 		var REDIRECT_URI = "http://localhost" + CALLBACK_PATH;
-		app.get('/users/spotify/login', function(req, res) {
+		app.get('/users/:id/spotify/login', function(req, res) {
 				var state = generateRandomString(16);
+				stateMap[state] = req.params.id;
 				res.cookie(STATEKEY, state);
 
 				console.log("Starting Spotify Auth for " + state);
@@ -43,7 +47,6 @@ function init(app, appkeys)
 			var code = req.query.code || null;
 			var state = req.query.state || null;
 			var storedState = req.cookies ? req.cookies[STATEKEY] : null;
-			console.log(req.cookies);
 
 			console.log("Received callback for " + state);
 			console.log("Saved state is " + storedState);
@@ -89,8 +92,44 @@ function init(app, appkeys)
 						access_tokens[state] = access_token;
 						refresh_tokens[state] = refresh_token;
 
-						// we can also pass the token to the browser to make requests from there
-						res.redirect('/host');
+						db.serialize(() => {
+							db.get("SELECT `group` FROM users WHERE `userId` = ?", [stateMap[state]], (err, row) => {
+								if(err){
+									console.log(err);
+									res.sendStatus(400);
+								}else{
+									db.all("SELECT * FROM users WHERE `group` = ? AND `spotifyAccessToken` IS NOT NULL", [row['group']], (err, rows) => {
+										if(err){
+											console.log(err);
+											res.sendStatus(500);
+										}else{
+											db.run("UPDATE users SET `spotifyAccessToken` = ?, `spotifyRefreshToken` = ? WHERE `userId` = ?", [access_token, refresh_token, stateMap[state]], (err) => {
+												if(err){
+													console.log(err);
+													res.sendStatus(500);
+													return;
+												}
+											});
+
+											if(rows.length == 0) {
+												db.run("UPDATE groups SET `ownerAccessToken` = ?, `ownerRefreshToken` = ? WHERE `groupId` = ?", [access_token, refresh_token, row['group']], (err) => {
+													delete stateMap[state];
+													if(err){
+														console.log(err);
+														res.sendStatus(500);
+													}else{
+														res.redirect('/users/spotify/success');
+													}
+												});
+											}else{
+												res.redirect('/users/spotify/success');
+											}
+										}
+									});
+									
+								}
+							});
+						});	
 					} else {
 						res.redirect('/#' +
 							querystring.stringify({
@@ -123,6 +162,10 @@ function init(app, appkeys)
 					});
 				}
 			});
+		});
+
+		app.all('/users/spotify/success', (req, res) => {
+			res.sendStatus(200);
 		});
 }
 
