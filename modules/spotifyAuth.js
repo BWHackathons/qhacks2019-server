@@ -18,7 +18,7 @@ var fullUserData = {};
 
 function init(app, config, appkeys)
 {
-		var REDIRECT_URI = config["proto"] + config["domain"] + CALLBACK_PATH;
+		var REDIRECT_URI = "http://localhost" + CALLBACK_PATH;
 		app.get('/users/spotify/login', function(req, res) {
 				var state = generateRandomString(16);
 				res.cookie(STATEKEY, state);
