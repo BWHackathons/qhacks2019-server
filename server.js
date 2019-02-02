@@ -7,8 +7,10 @@ var path_module = require('path');
 var _ = require("lodash");
 var sqlite = require("sqlite3");
 
-const PORT = 80; //443 for HTTPS
+var helpers = require("./modules/helpers");
+var sapi = require("./modules/sapi")
 
+const PORT = 80; //443 for HTTPS
 
 var db = new sqlite.Database("Konvoi.sqlite", (err) => {
 	if(err){
@@ -17,8 +19,8 @@ var db = new sqlite.Database("Konvoi.sqlite", (err) => {
 	}
 
 	db.serialize(() => {
-		db.run("CREATE TABLE `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT NOT NULL, PRIMARY KEY(`groupId`) )");
-		db.run("CREATE TABLE `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiId` TEXT, FOREIGN KEY (`group`) references groups(`groupId`) )");
+		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, PRIMARY KEY(`groupId`) )");
+		db.run("CREATE TABLE IF NOT EXISTS `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiId` TEXT, FOREIGN KEY (`group`) references groups(`groupId`) )");
 	});
 
 	console.log("DB Connection Succeeded");
@@ -35,8 +37,51 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 	console.log("Express HTTP server listening on port " + httpApp.get('port'));
 
 	httpApp.all("/groups/create", (req, res) => {
-
+		let code = helpers.generateCode();
+		console.log(code);
+		db.serialize(() => {
+			db.run("INSERT INTO groups(groupId) VALUES (?)", [code], (err) => {
+				if(err){
+					console.log(err);
+					res.sendStatus(500);
+				}else{
+					res.status(201).send(code);
+				}
+			});
+		});
 	});
+
+	httpApp.all("/groups/join/:code", (req, res) => {
+		db.serialize(() => {
+			db.all("SELECT * FROM users WHERE `group`=?", [req.params.code], (err, rows) => {
+				if(err){
+					console.log(err);
+					res.sendStatus(500);
+				}else{
+					let type = (rows.length == 0); //user type 0 is passenger, 1 is driver
+					db.run("INSERT INTO users(`group`, `type`) VALUES (?, ?)", [req.params.code, type], (err) => {
+						if(err){
+							console.log(err);
+							res.sendStatus(400);
+						}else{
+							db.get("SELECT * FROM users ORDER BY `userId` DESC LIMIT 1", (err, row) => {
+								if(err){
+									console.log(err);
+									res.sendStatus(500);
+								}else{
+									console.log(row);
+									res.status(200).send(JSON.stringify(row));
+								}
+							});	
+						}
+					});
+				}
+			});
+		});
+	});
+
+	httpApp.all("/user/:userId/")
+
 });
 
 
