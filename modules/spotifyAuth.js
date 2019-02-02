@@ -20,7 +20,7 @@ var stateMap = {};
 
 function init(app, appkeys, db)
 {
-		var REDIRECT_URI = "http://localhost" + CALLBACK_PATH;
+		var REDIRECT_URI = "http://10.217.11.57" + CALLBACK_PATH;
 		app.get('/users/:id/spotify/login', function(req, res) {
 				var state = generateRandomString(16);
 				stateMap[state] = req.params.id;

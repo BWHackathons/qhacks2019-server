@@ -42,20 +42,25 @@ function init(app, db) {
 									}
 								}
 								if(!existingPlayer) {
-									sapi.setDevice(row['spotifyAccessToken'], devices[0].id, true, (status) => {
-										if(status) {
-											res.sendStatus(200);
-										}else{
-											res.sendStatus(500);
-										}
-									});
+									if(devices.length == 0) {
+										sapi.setDevice(row['spotifyAccessToken'], devices[0].id, true, (status) => {
+											if(!status){
+												res.sendStatus(500);
+												return;
+											}
+										});
+									}
 								}else{
 									sapi.play(row['spotifyAccessToken'], spotifyUri, (playStatus) => {
-										if(playStatus)
-											res.sendStatus(200);
-										else
+										if(!playStatus){
 											res.sendStatus(500);
+											return;
+										}
 									});
+								}
+
+								if(i == rows.length -1) { //last iteration
+									res.sendStatus(200);
 								}
 							});
 						}
@@ -88,12 +93,14 @@ function init(app, db) {
 							if(existingPlayer) {
 								console.log("")
 								sapi.pause(row['spotifyAccessToken'], (pauseStatus) => {
-									if(pauseStatus)
-										res.sendStatus(200);
-									else
+									if(!pauseStatus){
 										res.sendStatus(500);
+										return;
+									}
 								});
-							}else{
+							}
+
+							if(i == rows.length - 1){
 								res.sendStatus(200);
 							}
 						});

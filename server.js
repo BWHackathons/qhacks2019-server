@@ -12,6 +12,7 @@ var helpers = require("./modules/helpers");
 var sapi = require("./modules/sapi");
 var sauth = require("./modules/spotifyAuth");
 var shandler = require("./modules/spotifyHandler");
+var lhandler = require("./modules/locationHandler");
 
 var appkeys = require("./private/keys");
 
@@ -25,7 +26,7 @@ var db = new sqlite.Database("Konvoi.sqlite", (err) => {
 
 	db.serialize(() => {
 		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, `ownerAccessToken` TEXT, `ownerRefreshToken` TEXT, `ownerSpotifyId` TEXT, `spotifyPlaylistId` TEXT, PRIMARY KEY(`groupId`) )");
-		db.run("CREATE TABLE IF NOT EXISTS `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiId` TEXT, `spotifyAccessToken` TEXT, `spotifyRefreshToken` TEXT, FOREIGN KEY (`group`) references groups(`groupId`) )");
+		db.run("CREATE TABLE IF NOT EXISTS `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiUrl` TEXT, `spotifyAccessToken` TEXT, `spotifyRefreshToken` TEXT, `lat` REAL, `lng` REAL, FOREIGN KEY (`group`) references groups(`groupId`) )");
 	});
 
 	console.log("DB Connection Succeeded");
@@ -44,6 +45,7 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 
 	sauth.init(httpApp, appkeys, db);
 	shandler.init(httpApp, db);
+	lhandler.init(httpApp, db);
 
 	httpApp.all("/groups/create", (req, res) => {
 		let code = helpers.generateCode();
