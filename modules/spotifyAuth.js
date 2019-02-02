@@ -3,6 +3,7 @@
 /* Modules */
 var querystring = require('querystring');
 var request = require('request');
+var sapi = require('./sapi')
 
 /* Constants */
 const SCOPE = "user-read-private user-read-email user-read-playback-state user-modify-playback-state playlist-modify-private";
@@ -12,7 +13,6 @@ const CALLBACK_PATH = "/users/spotify/callback";
 /* Module Globals */
 var access_tokens = {};
 var refresh_tokens = {};
-var fullUserData = {};
 
 var stateMap = {};
 
@@ -85,49 +85,51 @@ function init(app, appkeys, db)
 						};
 
 						// use the access token to access the Spotify Web API
-						request.get(options, function(error, response, body) {
-							fullUserData[state] = body;
-						});
-
-						access_tokens[state] = access_token;
-						refresh_tokens[state] = refresh_token;
-
-						db.serialize(() => {
-							db.get("SELECT `group` FROM users WHERE `userId` = ?", [stateMap[state]], (err, row) => {
-								if(err){
-									console.log(err);
-									res.sendStatus(400);
-								}else{
-									db.all("SELECT * FROM users WHERE `group` = ? AND `spotifyAccessToken` IS NOT NULL", [row['group']], (err, rows) => {
-										if(err){
-											console.log(err);
-											res.sendStatus(500);
-										}else{
-											db.run("UPDATE users SET `spotifyAccessToken` = ?, `spotifyRefreshToken` = ? WHERE `userId` = ?", [access_token, refresh_token, stateMap[state]], (err) => {
-												if(err){
-													console.log(err);
-													res.sendStatus(500);
-													return;
-												}
-											});
-
-											if(rows.length == 0) {
-												db.run("UPDATE groups SET `ownerAccessToken` = ?, `ownerRefreshToken` = ? WHERE `groupId` = ?", [access_token, refresh_token, row['group']], (err) => {
-													delete stateMap[state];
+						request.get(options, function(error, response, fullUserData) {
+							db.serialize(() => {
+								db.get("SELECT `group` FROM users WHERE `userId` = ?", [stateMap[state]], (err, userData) => {
+									if(err){
+										console.log(err);
+										res.sendStatus(400);
+									}else{
+										db.all("SELECT * FROM users WHERE `group` = ? AND `spotifyAccessToken` IS NOT NULL", [userData['group']], (err, rows) => {
+											if(err){
+												console.log(err);
+												res.sendStatus(500);
+											}else{
+												db.run("UPDATE users SET `spotifyAccessToken` = ?, `spotifyRefreshToken` = ? WHERE `userId` = ?", [access_token, refresh_token, stateMap[state]], (err) => {
 													if(err){
 														console.log(err);
 														res.sendStatus(500);
-													}else{
-														res.redirect('/users/spotify/success');
+														return;
 													}
 												});
-											}else{
-												res.redirect('/users/spotify/success');
+
+												if(rows.length == 0) {
+													sapi.createPlaylist(access_token, fullUserData.id, userData['group'], (playlistId) => {
+														if(playlistId != null) {
+															db.run("UPDATE groups SET `ownerAccessToken` = ?, `ownerRefreshToken` = ?, `ownerSpotifyId` = ?, `spotifyPlaylistId` = ? WHERE `groupId` = ?", [access_token, refresh_token, fullUserData.id, playlistId, userData['group']], (err) => {
+																delete stateMap[state];
+																if(err){
+																	console.log(err);
+																	res.sendStatus(500);
+																}else{
+																	res.redirect('/users/spotify/success');
+																}
+															});
+														}else{
+															res.sendStatus(500);
+														}
+													});
+													
+												}else{
+													res.redirect('/users/spotify/success');
+												}
 											}
-										}
-									});
-									
-								}
+										});
+										
+									}
+								});
 							});
 						});	
 					} else {
@@ -169,22 +171,6 @@ function init(app, appkeys, db)
 		});
 }
 
-function getAuthToken(user)
-{
-	if(access_tokens[user])
-		return access_tokens[user];
-	else
-		return null;
-}
-
-function getUserData(user)
-{
-	if(access_tokens[user])
-		return fullUserData[user];
-	else
-		return null;
-}
-
 /* Helper Functions */
 
 var generateRandomString = function(length) {
@@ -201,7 +187,5 @@ var generateRandomString = function(length) {
 
 module.exports = {
 		init,
-		STATEKEY,
-		getAuthToken,
-		getUserData
+		STATEKEY
 };

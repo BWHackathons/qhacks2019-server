@@ -24,7 +24,7 @@ var db = new sqlite.Database("Konvoi.sqlite", (err) => {
 	}
 
 	db.serialize(() => {
-		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, `ownerAccessToken` TEXT, `ownerRefreshToken` TEXT, PRIMARY KEY(`groupId`) )");
+		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, `ownerAccessToken` TEXT, `ownerRefreshToken` TEXT, `ownerSpotifyId` TEXT, `spotifyPlaylistId` TEXT, PRIMARY KEY(`groupId`) )");
 		db.run("CREATE TABLE IF NOT EXISTS `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiId` TEXT, `spotifyAccessToken` TEXT, `spotifyRefreshToken` TEXT, FOREIGN KEY (`group`) references groups(`groupId`) )");
 	});
 

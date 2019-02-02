@@ -35,6 +35,7 @@ function setDevice(auth, device, play=false, callback=undefined)
 
 function play(auth, contextUri=undefined, callback=undefined)
 {
+	console.log("playing: " + contextUri);
 	put("https://api.spotify.com/v1/me/player/play", {context_uri: contextUri?contextUri:null}, auth, function(err, resp, body){
 		if (!err && resp.statusCode == 204) {
 			console.log("Play success");
@@ -71,15 +72,15 @@ function createPlaylist(auth, userId, code, callback)
 		name: PLAYLIST_NAME + "-" + code,
 		public: false,
 		collaborative: false,
-		description: "Playlist created and used by SpotDJ for room " + code + "."
+		description: "Playlist created and used by Konvoi for room " + code + "."
 	};
 	console.log("Creating playlist for: " + userId);
 	post("https://api.spotify.com/v1/users/" + userId + "/playlists", params, auth, function(err, resp, body){
 		if (!err && (resp.statusCode == 200 || resp.statusCode == 201)) {
-			//callback(JSON.parse(body).id);
 			callback(body.id);
 		}else{
 			console.log(JSON.stringify(body));
+			callback(null);
 		}
 	});
 }
