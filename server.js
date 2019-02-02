@@ -25,7 +25,7 @@ var db = new sqlite.Database("Konvoi.sqlite", (err) => {
 	}
 
 	db.serialize(() => {
-		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, `ownerAccessToken` TEXT, `ownerRefreshToken` TEXT, `ownerSpotifyId` TEXT, `spotifyPlaylistId` TEXT, PRIMARY KEY(`groupId`) )");
+		db.run("CREATE TABLE IF NOT EXISTS `groups` ( `groupId` TEXT NOT NULL UNIQUE, `destAddr` TEXT, `tripName` TEXT, `ownerAccessToken` TEXT, `ownerRefreshToken` TEXT, `ownerSpotifyId` TEXT, `spotifyPlaylistId` TEXT, PRIMARY KEY(`groupId`) )");
 		db.run("CREATE TABLE IF NOT EXISTS `users` ( `userId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, `group` TEXT, `type` INTEGER NOT NULL, `bitmojiUrl` TEXT, `spotifyAccessToken` TEXT, `spotifyRefreshToken` TEXT, `lat` REAL, `lng` REAL, FOREIGN KEY (`group`) references groups(`groupId`) )");
 	});
 
@@ -86,6 +86,32 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 							});	
 						}
 					});
+				}
+			});
+		});
+	});
+
+	httpApp.post("/groups/:groupId/setDest/:destAddr", (req, res) => {
+		db.serialize(() => {
+			db.run("UPDATE groups SET `destAddr` = ? WHERE `groupId` = ?", [req.params.destAddr, req.params.groupId], (err) => {
+				if(err){
+					console.log(err);
+					res.sendStatus(400);
+				}else{
+					res.sendStatus(200);
+				}
+			});
+		});
+	});
+
+	httpApp.post("/groups/:groupId/setName/:tripName", (req, res) => {
+		db.serialize(() => {
+			db.run("UPDATE groups SET `tripName` = ? WHERE `groupId` = ?", [req.params.tripName, req.params.groupId], (err) => {
+				if(err){
+					console.log(err);
+					res.sendStatus(400);
+				}else{
+					res.sendStatus(200);
 				}
 			});
 		});
