@@ -67,34 +67,36 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 			res.sendStatus(400);
 			return;
 		}
-		db.serialize(() => {
-			db.all("SELECT * FROM users WHERE `group`=?", [req.params.code], (err, rows) => {
-				if(err){
-					console.log(err);
-					res.sendStatus(500);
-				}else{
-					let type = (rows.length == 0); //user type 0 is passenger, 1 is driver
-					db.run("INSERT INTO users(`group`, `type`) VALUES (?, ?)", [req.params.code, type], (err) => {
-						if(err){
-							console.log(err);
-							res.sendStatus(400);
-						}else{
-							db.get("SELECT * FROM users ORDER BY `userId` DESC LIMIT 1", (err, row) => {
-								if(err){
-									console.log(err);
-									res.sendStatus(500);
-								}else{
-									db.get("SELECT * FROM groups WHERE `groupId` = ?", [req.params.code], (err, row2) => {
-										let obj = {user: row, group: row2};
-										res.status(200).send(JSON.stringify(obj));
-									});	
-								}
-							});	
-						}
-					});
-				}
+		if (req.params.code != null){
+			db.serialize(() => {
+				db.all("SELECT * FROM users WHERE `group`=?", [req.params.code], (err, rows) => {
+					if(err){
+						console.log(err);
+						res.sendStatus(500);
+					}else{
+						let type = (rows.length == 0); //user type 0 is passenger, 1 is driver
+						db.run("INSERT INTO users(`group`, `type`) VALUES (?, ?)", [req.params.code, type], (err) => {
+							if(err){
+								console.log(err);
+								res.sendStatus(400);
+							}else{
+								db.get("SELECT * FROM users ORDER BY `userId` DESC LIMIT 1", (err, row) => {
+									if(err){
+										console.log(err);
+										res.sendStatus(500);
+									}else{
+										db.get("SELECT * FROM groups WHERE `groupId` = ?", [req.params.code], (err, row2) => {
+											let obj = {user: row, group: row2};
+											res.status(200).send(JSON.stringify(obj));
+										});	
+									}
+								});	
+							}
+						});
+					}
+				});
 			});
-		});
+		}
 	});
 
 	httpApp.post("/groups/:groupId/setDest/:destAddr", (req, res) => {
@@ -128,9 +130,9 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 			db.run("UPDATE users SET `bitmojiUrl` = ? WHERE `userId` = ?", [req.body.bitmojiUrl, req.params.id], (err) => {
 				if(err){
 					console.log(err);
-					res.sendStatus(400);
+					res.status(400).send({});
 				}else{
-					res.sendStatus(200);
+					res.status(200).send({});
 				}
 			});
 		});
