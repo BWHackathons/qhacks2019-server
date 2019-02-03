@@ -63,6 +63,10 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 	});
 
 	httpApp.all("/groups/join/:code", (req, res) => {
+		if(req.params.code.length > 6) {
+			res.sendStatus(400);
+			return;
+		}
 		db.serialize(() => {
 			db.all("SELECT * FROM users WHERE `group`=?", [req.params.code], (err, rows) => {
 				if(err){
@@ -80,8 +84,10 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 									console.log(err);
 									res.sendStatus(500);
 								}else{
-									console.log(row);
-									res.status(200).send(JSON.stringify(row));
+									db.get("SELECT * FROM groups WHERE `groupId` = ?", [req.params.code], (err, row2) => {
+										let obj = {user: row, group: row2};
+										res.status(200).send(JSON.stringify(obj));
+									});	
 								}
 							});	
 						}
