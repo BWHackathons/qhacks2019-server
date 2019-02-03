@@ -3,16 +3,15 @@
 
 /* Core Functions */
 function init(app, db) {
-	app.all("/users/:id/location/:latlng", (req, res) => {
-		let lat = req.params.latlng.split(",")[0];
-		let lng = req.params.latlng.split(",")[1];
+	app.post("/users/:id/location", (req, res) => {
+		console.log(req.body.lat + ", " + req.body.lng);
 		db.serialize(() => {
-			db.run("UPDATE users SET lat = ? AND lng = ? WHERE `userId` = ?", [lat, lng, req.params.id], (err) => {
+			db.run("UPDATE users SET (`lat`, `lng`) = (?, ?) WHERE `userId` = ?", [parseFloat(req.body.lat), parseFloat(req.body.lng), req.params.id], (err) => {
 				if(err){
 					console.log(err);
-					res.sendStatus(400);
+					res.status(400).send({});
 				}else{
-					res.sendStatus(200);
+					res.status(200).send({});
 				}
 			});
 		});
