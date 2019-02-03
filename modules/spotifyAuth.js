@@ -167,7 +167,7 @@ function init(app, appkeys, db)
 		});
 
 		app.all('/users/spotify/success', (req, res) => {
-			res.sendStatus(200);
+			res.status(200).send("Login successful! Please close this page and return to Konvoi.");
 		});
 }
 
