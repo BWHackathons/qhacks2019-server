@@ -114,7 +114,7 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 		});
 	});
 
-	httpApp.post("/groups/:groupId/setName/:tripName", (req, res) => {
+	httpApp.all("/groups/:groupId/setName/:tripName", (req, res) => {
 		db.serialize(() => {
 			if (req.params.tripName != null){
 				db.run("UPDATE groups SET `tripName` = ? WHERE `groupId` = ?", [req.params.tripName, req.params.groupId], (err) => {

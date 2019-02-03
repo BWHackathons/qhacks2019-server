@@ -42,7 +42,7 @@ function init(app, db) {
 									}
 								}
 								if(!existingPlayer) {
-									if(devices.length == 0) {
+									if(devices.length > 0) {
 										sapi.setDevice(row['spotifyAccessToken'], devices[0].id, true, (status) => {
 											if(!status){
 												res.sendStatus(500);
