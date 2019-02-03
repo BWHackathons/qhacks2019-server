@@ -101,40 +101,46 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 
 	httpApp.post("/groups/:groupId/setDest/:destAddr", (req, res) => {
 		db.serialize(() => {
-			db.run("UPDATE groups SET `destAddr` = ? WHERE `groupId` = ?", [req.params.destAddr, req.params.groupId], (err) => {
-				if(err){
-					console.log(err);
-					res.sendStatus(400);
-				}else{
-					res.sendStatus(200);
-				}
-			});
+			if (req.params.destAddr != null){
+				db.run("UPDATE groups SET `destAddr` = ? WHERE `groupId` = ?", [req.params.destAddr, req.params.groupId], (err) => {
+					if(err){
+						console.log(err);
+						res.sendStatus(400);
+					}else{
+						res.sendStatus(200);
+					}
+				});
+			}
 		});
 	});
 
 	httpApp.post("/groups/:groupId/setName/:tripName", (req, res) => {
 		db.serialize(() => {
-			db.run("UPDATE groups SET `tripName` = ? WHERE `groupId` = ?", [req.params.tripName, req.params.groupId], (err) => {
-				if(err){
-					console.log(err);
-					res.sendStatus(400);
-				}else{
-					res.sendStatus(200);
-				}
-			});
+			if (req.params.tripName != null){
+				db.run("UPDATE groups SET `tripName` = ? WHERE `groupId` = ?", [req.params.tripName, req.params.groupId], (err) => {
+					if(err){
+						console.log(err);
+						res.sendStatus(400);
+					}else{
+						res.sendStatus(200);
+					}
+				});
+			}
 		});
 	});
 
 	httpApp.post("/users/:id/setBitmoji", (req, res) => {
 		db.serialize(() => {
-			db.run("UPDATE users SET `bitmojiUrl` = ? WHERE `userId` = ?", [req.body.bitmojiUrl, req.params.id], (err) => {
-				if(err){
-					console.log(err);
-					res.status(400).send({});
-				}else{
-					res.status(200).send({});
-				}
-			});
+			if (req.params.id != null){
+				db.run("UPDATE users SET `bitmojiUrl` = ? WHERE `userId` = ?", [req.body.bitmojiUrl, req.params.id], (err) => {
+					if(err){
+						console.log(err);
+						res.status(400).send({});
+					}else{
+						res.status(200).send({});
+					}
+				});
+			}
 		});
 	});
 
