@@ -45,16 +45,14 @@ function init(app, db) {
 									if(devices.length > 0) {
 										sapi.setDevice(row['spotifyAccessToken'], devices[0].id, true, (status) => {
 											if(!status){
-												res.sendStatus(500);
-												return;
+												console.log("failed to play for a user");
 											}
 										});
 									}
 								}else{
 									sapi.play(row['spotifyAccessToken'], spotifyUri, (playStatus) => {
 										if(!playStatus){
-											res.sendStatus(500);
-											return;
+											console.log("failed to play for a user");
 										}
 									});
 								}
@@ -94,8 +92,7 @@ function init(app, db) {
 								console.log("")
 								sapi.pause(row['spotifyAccessToken'], (pauseStatus) => {
 									if(!pauseStatus){
-										res.sendStatus(500);
-										return;
+										console.log("failed to pause for a user");
 									}
 								});
 							}
