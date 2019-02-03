@@ -96,6 +96,8 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 					}
 				});
 			});
+		}else{
+			res.sendStatus(400);
 		}
 	});
 
@@ -110,6 +112,8 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 						res.sendStatus(200);
 					}
 				});
+			}else{
+				res.sendStatus(400);
 			}
 		});
 	});
@@ -125,6 +129,8 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 						res.sendStatus(200);
 					}
 				});
+			}else{
+				res.sendStatus(400);
 			}
 		});
 	});
@@ -140,6 +146,8 @@ var httpServer = httpApp.listen(httpApp.get('port'), () =>
 						res.status(200).send({});
 					}
 				});
+			}else{
+				res.status(400).send({});
 			}
 		});
 	});
